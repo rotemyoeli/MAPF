@@ -2,7 +2,7 @@
 import time
 from .finder import TIME_LIMIT, MAX_RUNS, BY_START, BY_END
 from .a_star import AStarFinder
-from pathfinding.core.diagonal_movement import DiagonalMovement
+from pathfinding.Core.diagonal_movement import DiagonalMovement
 
 
 class BiAStarFinder(AStarFinder):

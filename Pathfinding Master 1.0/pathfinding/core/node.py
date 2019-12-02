@@ -20,7 +20,7 @@ class Node(object):
         # used for weighted algorithms
         self.weight = weight
 
-        # values used in the finder
+        # values used in the SearchAlgorithms
         self.cleanup()
 
     def __lt__(self, other):

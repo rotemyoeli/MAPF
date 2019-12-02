@@ -1,13 +1,13 @@
 import time
-from pathfinding.core.heuristic import manhatten, octile
-from pathfinding.core.diagonal_movement import DiagonalMovement
-from pathfinding.core.node import Node
+from pathfinding.Core.heuristic import manhatten, octile
+from pathfinding.Core.diagonal_movement import DiagonalMovement
+from pathfinding.Core.node import Node
 from .finder import Finder, TIME_LIMIT, MAX_RUNS
 
 
 class IDAStarFinder(Finder):
     """
-    Iterative Deeping A Star (IDA*) path-finder.
+    Iterative Deeping A Star (IDA*) path-SearchAlgorithms.
 
     Recursion based on:
        http://www.apl.jhu.edu/~hall/AI-Programming/IDA-Star.html
