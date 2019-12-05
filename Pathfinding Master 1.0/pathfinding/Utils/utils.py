@@ -201,12 +201,11 @@ def get_positions(grid_tmp, agent_number):
 
     return new_starts, new_goals
 
-##############################################################################
-# Return the radius - robust around the agent no. 0 - The adverarial
-##############################################################################
 
+##############################################################################
+# Return the radius - robust around the agent no. 0 - The adversarial
+##############################################################################
 def get_radius(grid, node, robust_param, route, current_agent_no, Is_MDR):
-
     robust_radius = []
 
     if Is_MDR == 0:
@@ -232,7 +231,8 @@ def get_radius(grid, node, robust_param, route, current_agent_no, Is_MDR):
     for step_right in range(0, length):
         for step_down in range(0, length):
             neighbor = (left_up[0] + step_right, left_up[1] + step_down)
-            if grid.nodes[neighbor[0]][neighbor[1]].walkable:
+            print("neighbor[0] " + str(neighbor[0]) +  " neighbor[1] " + str(neighbor[1]))
+            if neighbor[0] < len(grid.nodes) and (neighbor[0] < len(grid.nodes[neighbor[0]])) and (grid.nodes[neighbor[0]][neighbor[1]].walkable):
                 robust_radius.append(neighbor)
             else:
                 continue

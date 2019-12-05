@@ -153,16 +153,15 @@ class MainUI:
 
 
     def create_run_buttons(self, main_dialog, row_index):
-        ttk.Button(main_dialog, text='Create Routes',   command=self.create_routes)         .grid(row=row_index, column=0, sticky=E, pady=4, padx=5)
-        ttk.Button(main_dialog, text='Print Routes',    command=self.print_routes)          .grid(row=row_index, column=1, sticky=E, pady=4, padx=5)
+        ttk.Button(main_dialog, text='Create Routes',   command=self.create_routes)         .grid(row=row_index, column=0, sticky=W, pady=4, padx=5)
+        ttk.Button(main_dialog, text='Print Routes',    command=self.print_routes)          .grid(row=row_index, column=1, sticky=W, pady=4, padx=5)
         ttk.Button(main_dialog, text='Convert to CSV1', command=self.convert_csv_step1)     .grid(row=row_index, column=2, sticky=E, pady=4, padx=5)
         ttk.Button(main_dialog, text='Convert to CSV2', command=self.convert_csv_step2)     .grid(row=row_index, column=3, sticky=E, pady=4, padx=5)
-        ttk.Button(main_dialog, text='Run MDR',         command=self.not_implemented_yet)   .grid(row=row_index, column=4, sticky=E, pady=4, padx=5)
+        ttk.Button(main_dialog, text='Run MDR',         command=self.not_implemented_yet)   .grid(row=row_index+1, column=0, sticky=W, pady=4, padx=5)
 
     def num_of_agents_updated(self):
         newNumOfAgents = int(self.num_of_agents_spinbox.get())
         oldNumOfAgents = len(self.agentsEntries)
-        print("blabla new:" + str(newNumOfAgents) +" old:" + str(oldNumOfAgents))
 
         if oldNumOfAgents < newNumOfAgents:
             #add new rows

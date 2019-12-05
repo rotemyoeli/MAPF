@@ -16,19 +16,20 @@ import glob
 # STEP 1 - To convert new xlsx files into csv format, to use only once
 ######################################################################
 def step_one(data_path):
-    os.chdir(data_path)
-    tmp = next(os.walk('.'))[1]
     extension = 'xlsx'
+    os.chdir(data_path)
+    folders = next(os.walk('.'))[1]
 
-    for robust_folder in range(0, len(tmp)):
-        path = "Robust_" + str(robust_folder)
-        os.chdir(path)
-        excel_files = [i for i in glob.glob('*.{}'.format(extension))]
-        for excel in excel_files:
-            out = excel.split('.')[0]+'.csv'
-            df = pd.read_excel(excel) # if only the first sheet is needed.
+    for robust_folder in folders:
+        os.chdir(robust_folder)
+        files = [i for i in glob.glob('*.{}'.format(extension))]
+        for input_file in files:
+            out = input_file.split('.')[0]+'.csv'
+            df = pd.read_excel(input_file)
+            first_column = df.columns[0]
+            df = df.drop([first_column], axis=1)
             df.to_csv(out)
-            os.remove(excel)
+            os.remove(input_file)
         os.chdir('..')
     os.chdir('..')
 
@@ -38,18 +39,17 @@ def step_one(data_path):
 def step_two(data_path):
     extension = 'csv'
     os.chdir(data_path)
-    tmp = next(os.walk('.'))[1]
-    for robust_folder in range(0, len(tmp)):
-        path = "Robust_" + str(robust_folder)
-        os.chdir(path)
+    folders = next(os.walk('.'))[1]
 
-        excel_files = [i for i in glob.glob('*.{}'.format(extension))]
-        for excel in excel_files:
-            out = excel.split('.')[0] + '.csv'
-            df = pd.read_csv(excel)
+    for robust_folder in folders:
+        os.chdir(robust_folder)
+
+        files = [i for i in glob.glob('*.{}'.format(extension))]
+        for input_file in files:
+            df = pd.read_csv(input_file)
             first_column = df.columns[0]
 
             df = df.drop([first_column], axis=1)
-            df.to_csv(out, index=False)
+            df.to_csv(input_file, index=False)
             os.chdir('..')
         os.chdir('..')
