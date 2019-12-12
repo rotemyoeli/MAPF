@@ -13,11 +13,9 @@ import os
 import glob
 import csv
 import ast
+import pylab as pl
 
-
-def print_route(map_file, route_file):
-    route = []
-
+def print_route(map_file, route_file, show_step_num):
     # load the map file into numpy array
     with open(map_file, 'rt') as infile:
         grid1 = np.array([list(line.strip()) for line in infile.readlines()])
@@ -33,52 +31,49 @@ def print_route(map_file, route_file):
     fig, ax = plt.subplots(figsize=(10, 5))
     ax.imshow(grid, cmap=plt.cm.gray)
 
-    counter = 0
-    route = []
+    all_routes = []
 
-    path = route_file
-    extension = 'csv'
-    os.chdir(path)
-    files = [i for i in glob.glob('*.{}'.format(extension))]
-
-    for file in files:
-        if counter == 0:
-            # reading csv file
-            with open(file, 'rt') as csvfile:
-                # creating a csv reader object
-                csvreader = csv.reader(csvfile)
-                header = next(csvreader)
-                # extracting each data row one by one
-                for row in csvreader:
-                    tmp_route = []
-                    for y in range(0, len(row)):
-                        if row[y]:
-                            tmp_route.append(ast.literal_eval(row[y]))
-                    route.append(tmp_route)
-            counter = counter + 1
+    with open(route_file, 'rt') as csvfile:
+        csv_reader = csv.reader(csvfile)
+        # extracting each data row one by one
+        for row in csv_reader:
+            tmp_route = []
+            for step in row:
+                if step:
+                    tmp_route.append(ast.literal_eval(step))
+            all_routes.append(tmp_route)
 
     ##############################################################################
     # plot the path
     ##############################################################################
-    for x in range(0, len(route)):
-        start = (route[x][0][0])
-        goal = (route[x][-1][0])
+    colors = ['white', 'green', 'blue', 'yellow', 'red', 'cyan', 'magenta', 'purple', 'brown', 'pink', 'gray', 'olive']
+    color_i = 0
+    for curr_route in all_routes:
+        if len(curr_route) == 0:
+            continue
+
+        start = curr_route[0][0]
+        goal = curr_route[len(curr_route)-1][0]
+
+        ax.scatter(start[1], start[0], marker="^", color=colors[color_i], s=50)
+        ax.scatter(goal[1], goal[0], marker="*", color=colors[color_i], s=50)
 
         # extract x and y coordinates from route list
         x_coords = []
         y_coords = []
 
-        if route:
-            for i in (range(0, len(route[x]))):
-                x1 = route[x][i][0][0]
-                y1 = route[x][i][0][1]
-                x_coords.append(x1)
-                y_coords.append(y1)
+        for ((x, y), step) in curr_route:
+            if show_step_num:
+                pl.text(y, x, str(step), color=colors[color_i], fontsize=11)
+            x_coords.append(x)
+            y_coords.append(y)
 
-        # plot path
-        ax.scatter(start[1], start[0], marker="^", color="white", s=50)
-        ax.scatter(goal[1], goal[0], marker="*", color="white", s=50)
-        ax.plot(y_coords, x_coords, color="white")
+        pl.margins(0.1)
+        ax.plot(y_coords, x_coords, "-0", color=colors[color_i])
+
+        color_i += 1
+        if color_i >= len(colors):
+            color_i = 0
 
     plt.grid(True)
     plt.show()

@@ -82,6 +82,7 @@ def find_free_place(grid_tmp, current_agent_pos, neighbors):
 ##############################################################################
 # Valid start according to the robust level
 ##############################################################################
+# currently not used
 def get_start_approval(array, start_pos, agent_no, route, robust_dist):
 
     radius = get_radius(array, start_pos[0], robust_dist)
@@ -204,36 +205,39 @@ def get_positions(grid_tmp, agent_number):
 
 ##############################################################################
 # Return the radius - robust around the agent no. 0 - The adversarial
+# the radius is a list of nodes that risk agent no. 0, meaning all nodes
+# from which another agent can reach agent no. 0 using "robust_param" steps
 ##############################################################################
-def get_radius(grid, node, robust_param, route, current_agent_no, Is_MDR):
+def get_radius(grid, node, robust_param, all_agents_routes, current_agent_no, Is_MDR):
     robust_radius = []
 
     if Is_MDR == 0:
-        current_agent_no = 0
-    if len(route) == 0:
-        return robust_radius
+        current_agent_no = 0 # Irit - why?
+    if len(all_agents_routes) == 0:
+        return []
 
-    if robust_param == 0:
-        if node.step < len(route[0])-1:
-            robust_radius.append(route[current_agent_no][node.step])
-        return robust_radius
+    agent0_route = all_agents_routes[0]
 
-    if node.step < len(route[0]) - 1:
-        left_up = (route[0][node.step][0] - (2 * robust_param), route[0][node.step][1] - (2 * robust_param))
-    else:
-        return robust_radius
+    if robust_param == 0 and node.step <= len(agent0_route[0]):
+        return all_agents_routes[current_agent_no][node.step]  # Irit - why?
 
-    if robust_param == 0:
-        length = 0
-    else:
-        length = (robust_param * 4) + 1
+    # verify Agent0 exists on the map during this step
+    # this check could be wrong if agent0 goal policy is "stay at goal" - the length of the path can be shorter than
+    # other agents steps but they still need to verify they keep the radius from him
+    if node.step >= len(agent0_route):
+        return []
+
+    left_up = ((agent0_route[node.step][0][0] - (2 * robust_param)), agent0_route[node.step][0][1] - (2 * robust_param))
+    length = (robust_param * 4) + 1
 
     for step_right in range(0, length):
         for step_down in range(0, length):
             neighbor = (left_up[0] + step_right, left_up[1] + step_down)
-            print("neighbor[0] " + str(neighbor[0]) +  " neighbor[1] " + str(neighbor[1]))
-            if neighbor[0] < len(grid.nodes) and (neighbor[0] < len(grid.nodes[neighbor[0]])) and (grid.nodes[neighbor[0]][neighbor[1]].walkable):
+            print("neighbor=( " + str(neighbor[0]) + ", " + str(neighbor[1]) + ")")
+            if neighbor[0] < len(grid.nodes) \
+                    and neighbor[0] < len(grid.nodes[neighbor[0]]) \
+                    and grid.nodes[neighbor[0]][neighbor[1]].walkable:
+
                 robust_radius.append(neighbor)
-            else:
-                continue
+
     return robust_radius

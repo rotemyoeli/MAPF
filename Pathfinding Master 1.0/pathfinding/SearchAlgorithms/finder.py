@@ -85,22 +85,18 @@ class Finder(object):
         '''
         find neighbor, same for Djikstra, A*, Bi-A*, IDA*
         '''
-
         grid2 = grid
         if not diagonal_movement:
             diagonal_movement = self.diagonal_movement
 
         if robust_level > 0:
             radius = utils.get_radius(grid2, node, robust_level, route, agent_no, 0)
-            for check_radius in range(0, len(radius) - 1):
-                if grid2.nodes[radius[check_radius][0]][radius[check_radius][1]].walkable == True:
-                    if (radius[check_radius]) != (node.x, node.y):
-                        grid2.nodes[radius[check_radius][0]][radius[check_radius][1]].walkable = False
+            for curr_radius in radius:
+                if curr_radius != (node.x, node.y):
+                    grid2.nodes[curr_radius[0]][curr_radius[1]].walkable = False
 
-            return grid2.neighbors(node, robust_level, diagonal_movement=diagonal_movement)
+        return grid2.neighbors(node, robust_level, diagonal_movement=diagonal_movement)
 
-        else:
-            return grid2.neighbors(node, robust_level, diagonal_movement=diagonal_movement)
 
     def keep_running(self):
         """

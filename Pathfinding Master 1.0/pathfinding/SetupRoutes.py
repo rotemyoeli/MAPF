@@ -1,30 +1,21 @@
-
 #############################################################################
 # import packages
 ##############################################################################
 import random
 import numpy as np
 import os
-#import utils
 from tkinter import *
 import itertools as itert
 from pathfinding.Utils import utils
+import pandas as pd
 
 from pathfinding.Core.diagonal_movement import DiagonalMovement
 from pathfinding.Core.grid import Grid
 from pathfinding.SearchAlgorithms.a_star import AStarFinder
-
-global map_file_name
-global data_folder
-global robust_param
-global min_num_of_agents
-global max_num_of_SG
-global is_random_SG
-global selected_route
 ###################################################################################
 # Main Setup Route
 ###################################################################################
-def create_routes(map_file_name, data_folder, robust_factor, num_of_agents):
+def create_routes(map_file_name, data_folder, robust_factor, num_of_agents, num_of_routes):
     # load the map file into numpy array
     with open(map_file_name, 'rt') as infile:
         grid1 = np.array([list(line.strip()) for line in infile.readlines()])
@@ -58,7 +49,7 @@ def create_routes(map_file_name, data_folder, robust_factor, num_of_agents):
     ##################################################
     # Create the no. of different Directories/robust
     ##################################################
-    for current_robust_factor in range(0, robust_factor):#robust_factor + 1):
+    for current_robust_factor in range(0, robust_factor+1):
         path = data_folder + "/" + "Robust_" + str(current_robust_factor)
         if not os.path.exists(path):
             os.makedirs(path)
@@ -67,7 +58,10 @@ def create_routes(map_file_name, data_folder, robust_factor, num_of_agents):
         ##################################################
         # Set here the number of unique routes
         ##################################################
-        for current_route in range(0, 2):#len(order_arr)):
+        for current_route in range(0, num_of_routes):
+            if current_route >= len(order_arr):
+                break
+
             current_agents_order = order_arr[current_route]
             current_agents_order = list(map(int, current_agents_order))
             route = []
@@ -88,3 +82,16 @@ def create_routes(map_file_name, data_folder, robust_factor, num_of_agents):
                 for x in range(0, len(route)):
                     print(route[x])
 
+            ##################################################
+            # Save routes to csv file
+            ##################################################
+            df_res = pd.DataFrame(route)
+            file_name_csv = "Route-" + str(current_route+1) + '_Agents-' + str(num_of_agents) + '_Robust-' + str(current_robust_factor) + '.csv'
+            print(file_name_csv)
+            df = pd.DataFrame(route)
+            df.to_csv(file_name_csv, index=False, header=False)
+
+        path = '..'
+        os.chdir(path)
+    path = '..'
+    os.chdir(path)
