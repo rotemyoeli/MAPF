@@ -55,8 +55,10 @@ def print_route(map_file, route_file, show_step_num):
         start = curr_route[0][0]
         goal = curr_route[len(curr_route)-1][0]
 
-        ax.scatter(start[1], start[0], marker="^", color=colors[color_i], s=50)
-        ax.scatter(goal[1], goal[0], marker="*", color=colors[color_i], s=50)
+        # ax.scatter(start[1], start[0], marker="^", color=colors[color_i], s=50)
+        # ax.scatter(goal[1], goal[0], marker="*", color=colors[color_i], s=50)
+        ax.scatter(start[0], start[1], marker="^", color=colors[color_i], s=50)
+        ax.scatter(goal[0], goal[1], marker="*", color=colors[color_i], s=50)
 
         # extract x and y coordinates from route list
         x_coords = []
@@ -64,12 +66,13 @@ def print_route(map_file, route_file, show_step_num):
 
         for ((x, y), step) in curr_route:
             if show_step_num:
-                pl.text(y, x, str(step), color=colors[color_i], fontsize=11)
+                pl.text(x, y, str(step), color=colors[color_i], fontsize=11)
             x_coords.append(x)
             y_coords.append(y)
 
         pl.margins(0.1)
-        ax.plot(y_coords, x_coords, "-0", color=colors[color_i])
+        # ax.plot(y_coords, x_coords, "-0", color=colors[color_i])
+        ax.plot(x_coords, y_coords, "-0", color=colors[color_i])
 
         color_i += 1
         if color_i >= len(colors):

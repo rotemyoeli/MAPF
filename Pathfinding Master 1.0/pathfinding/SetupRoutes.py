@@ -64,7 +64,8 @@ def create_routes(map_file_name, data_folder, robust_factor, num_of_agents, num_
 
             current_agents_order = order_arr[current_route]
             current_agents_order = list(map(int, current_agents_order))
-            route = []
+            routes = [[] for i in range(num_of_agents)]
+
             for agent_no in range(0, num_of_agents):
 
                 ############################
@@ -75,20 +76,21 @@ def create_routes(map_file_name, data_folder, robust_factor, num_of_agents, num_
                 goal = grid1.node(goals_arr[current_agents_order[agent_no]][1], goals_arr[current_agents_order[agent_no]][0])
 
                 finder = AStarFinder(diagonal_movement=DiagonalMovement.always)
-                path, runs = finder.find_path(start, goal, grid1, route, agent_no, current_robust_factor)
-                route.append(path)
+                path, runs = finder.find_path(start, goal, grid1, routes, agent_no, current_robust_factor)
+                # routes.append(path)
+                routes[agent_no] = path
                 print('operations:', runs, 'path length:', len(path))
                 print(grid1.grid_str(path=path, start=start, end=goal))
-                for x in range(0, len(route)):
-                    print(route[x])
+                for x in range(0, len(routes)):
+                    print(routes[x])
 
             ##################################################
             # Save routes to csv file
             ##################################################
-            df_res = pd.DataFrame(route)
+            df_res = pd.DataFrame(routes)
             file_name_csv = "Route-" + str(current_route+1) + '_Agents-' + str(num_of_agents) + '_Robust-' + str(current_robust_factor) + '.csv'
             print(file_name_csv)
-            df = pd.DataFrame(route)
+            df = pd.DataFrame(routes)
             df.to_csv(file_name_csv, index=False, header=False)
 
         path = '..'
