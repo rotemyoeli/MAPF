@@ -9,11 +9,15 @@ from tkinter import filedialog
 
 
 from pathfinding import SetupRoutes, config
+from pathfinding.Core.Agent import Agent, MotionEquation, StartPolicy, GoalPolicy
 from pathfinding.Utils import PrintRoutes
 
 ###################################################################################
 # INPUT UI
 ###################################################################################
+from pathfinding.Utils.PrintRoutesPyGame import PrintRoutesApp
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+
 class MainUI:
     room_file_entry: Entry
     data_folder_entry: Entry
@@ -27,13 +31,37 @@ class MainUI:
     agentsEntries: []
     createRoutesFrame: ttk.LabelFrame
     include_step_num: IntVar
+    print_routes_app: PrintRoutesApp
 
+    ###################################################################################
+    # Create UI
+    ###################################################################################
     def main(self):
         main_dialog = self.create_main_dialog()
-        self.create_general_data_frame(main_dialog, 1)
-        self.create_routes_frame(main_dialog, 2)
-        self.create_print_route_frame(main_dialog, 3)
-        self.create_MDR_frame(main_dialog, 4)
+
+        # Create Tab Control
+        TAB_CONTROL = ttk.Notebook(main_dialog)
+        TAB_CONTROL.grid(row=0, sticky=NSEW)
+        # Tab1
+        create_routes_tab = ttk.Frame(TAB_CONTROL)
+        TAB_CONTROL.add(create_routes_tab, text='Routs Creation')
+        self.create_general_data_frame(create_routes_tab, 1)
+        self.create_routes_frame(create_routes_tab, 2)
+
+        # Tab2
+        validate_routes_tab = ttk.Frame(TAB_CONTROL)
+        TAB_CONTROL.add(validate_routes_tab, text='Validate Routes')
+
+        # Tab3
+        print_routes_tab = ttk.Frame(TAB_CONTROL)
+        TAB_CONTROL.add(print_routes_tab, text='Print Routes')
+        self.create_print_route_frame(print_routes_tab, 1)
+        self.create_print_routes_pygame(print_routes_tab, 2)
+
+        # Tab4
+        mdr_tab = ttk.Frame(TAB_CONTROL)
+        TAB_CONTROL.add(mdr_tab, text='MDR')
+        self.create_MDR_frame(mdr_tab, 1)
 
         ttk.Separator(main_dialog, orient=HORIZONTAL).grid(row=11, sticky=EW, columnspan=10)
         self.create_run_buttons(main_dialog, 12)
@@ -47,6 +75,10 @@ class MainUI:
 
     def create_main_dialog(self):
         main_dialog = Tk()
+
+        main_dialog.columnconfigure(0, weight=1)
+        main_dialog.rowconfigure(0, weight=1)
+
         w = 590
         h = 670
 
@@ -68,27 +100,29 @@ class MainUI:
 
     def create_general_data_frame(self, main_dialog, frame_row_index):
         frame = ttk.LabelFrame(main_dialog, text="General Data", padding=10)  # inside padding
-        frame.grid(row=frame_row_index, pady=10, padx=10, sticky=EW, columnspan=10)  # outside padding
+        frame.grid(row=frame_row_index, pady=10, padx=10, sticky=NSEW, columnspan=10)  # outside padding
+        frame.columnconfigure(0, weight=1)
+        #frame.rowconfigure(0, weight=1)
 
         Label(frame, text="Room:").grid(row=0, column=1, sticky=W)
         self.room_file_entry = Entry(frame, width=65)
-        self.room_file_entry.insert(0, config.room_file_default)
-        #self.room_file_entry.insert(0, os.getcwd())
+        self.room_file_entry.insert(0, ROOT_DIR + config.room_file_default)
 
         self.room_file_entry.grid(row=0, column=2, sticky=W)
         ttk.Button(frame, text="Browse", command=self.browse_room_file).grid(row=0, column=3, sticky=E, padx=4)
 
         Label(frame, text="Data Folder:").grid(row=2, column=1, sticky=W)
         self.data_folder_entry = Entry(frame, width=65)
-        self.data_folder_entry.insert(0, config.data_folder_default)
-        #self.data_folder_entry.insert(0, os.getcwd())
+        self.data_folder_entry.insert(0, ROOT_DIR + config.data_folder_default)
         self.data_folder_entry.grid(row=2, column=2, sticky=W)
         ttk.Button(frame, text="Browse", command=self.browse_data_folder).grid(row=2, column=3, sticky=E, padx=4)
 
     def create_routes_frame(self, main_dialog, frame_row_index):
         self.createRoutesFrame = ttk.LabelFrame(main_dialog, text="Routes Data", padding=10)  # inside padding
         frame = self.createRoutesFrame
-        frame.grid(row=frame_row_index, pady=10, padx=10, sticky=EW, columnspan=10)  # outside padding
+        frame.grid(row=frame_row_index, pady=10, padx=10, sticky=NSEW, columnspan=10)  # outside padding
+        frame.columnconfigure(0, weight=1)
+        #frame.rowconfigure(0, weight=1)
 
         Label(frame, text="Number of Agents:").grid(row=0, column=0, sticky=W, pady=3, padx=3, columnspan=2)
         self.num_of_agents_spinbox = ttk.Spinbox(frame, from_=1, to=30, width=8, command=self.num_of_agents_updated)
@@ -106,11 +140,11 @@ class MainUI:
         self.num_of_routes_range_label = Label(frame, text="(Min:1 Max:" + str(maxRoutes) + ")")
         self.num_of_routes_range_label.grid(row=2, column=3, sticky=W, pady=3, padx=3, columnspan=2)
 
-        Label(frame, text="Robust Factor:").grid(row=1, column=0, sticky=W, pady=3, padx=3, columnspan=2)
-        self.robust_factor_spinbox = ttk.Spinbox(frame, from_=1, to=30, width=8)
-        self.robust_factor_spinbox.grid(row=1, column=2, sticky=W)
-        self.robust_factor_spinbox.delete(0, 'end')
-        self.robust_factor_spinbox.insert(0, config.robust_factor_default)
+        # Label(frame, text="Robust Factor:").grid(row=1, column=0, sticky=W, pady=3, padx=3, columnspan=2)
+        # self.robust_factor_spinbox = ttk.Spinbox(frame, from_=1, to=30, width=8)
+        # self.robust_factor_spinbox.grid(row=1, column=2, sticky=W)
+        # self.robust_factor_spinbox.delete(0, 'end')
+        # self.robust_factor_spinbox.insert(0, config.robust_factor_default)
 
         # table header
         Label(frame, text="Must Reach\nTarget(%)").grid(row=4 , column=1)
@@ -125,11 +159,13 @@ class MainUI:
 
     def create_print_route_frame(self, main_dialog, frame_row_index):
         frame = ttk.LabelFrame(main_dialog, text="Print Route", padding=10)  # inside padding
-        frame.grid(row=frame_row_index, pady=10, padx=10, sticky=EW, columnspan=10)  # outside padding
+        frame.grid(row=frame_row_index, pady=10, padx=10, sticky=NSEW)  # outside padding
+        frame.columnconfigure(0, weight=1)
+        #frame.rowconfigure(0, weight=1)
 
         Label(frame, text="Route:").grid(row=0, column=0, sticky=W, pady=3, padx=3)
         self.route_file_entry = Entry(frame, width=65)
-        self.route_file_entry.insert(0, config.route_file_default)
+        self.route_file_entry.insert(0, ROOT_DIR + config.route_file_default)
         self.route_file_entry.grid(row=0, column=1, sticky=W)
         ttk.Button(frame, text="Browse", command=self.browse_route_file).grid(row=0, column=2, sticky=E, padx=4)
 
@@ -137,10 +173,18 @@ class MainUI:
         Checkbutton(frame, text="Include Step No.", var=self.include_step_num).grid(row=1, column=0, columnspan=2, sticky=W)
         ttk.Button(frame, text="Print", command=self.print_routes).grid(row=1, column=2, sticky=E, padx=4)
 
+    def create_print_routes_pygame(self, main_dialog, frame_row_index):
+        frame = ttk.LabelFrame(main_dialog, padding=10)
+        frame.grid(row=frame_row_index, pady=10, padx=10, sticky=NSEW)
+        frame.columnconfigure(0, weight=1)
+        #frame.rowconfigure(0, weight=1)
+        self.print_routes_app = PrintRoutesApp(frame, 0)
 
     def create_MDR_frame(self, main_dialog, frame_row_index):
         frame = ttk.LabelFrame(main_dialog, text="MDR Data", padding=10)  # inside padding
-        frame.grid(row=frame_row_index, pady=10, padx=10, sticky=EW, columnspan=10)  # outside padding
+        frame.grid(row=frame_row_index, pady=10, padx=10, sticky=NSEW, columnspan=10)  # outside padding
+        frame.columnconfigure(0, weight=1)
+        #frame.rowconfigure(0, weight=1)
 
         Label(frame, text="Damage Steps Budget:").grid(row=0, column=1, sticky=W)
         self.damage_steps_spinbox = ttk.Spinbox(frame, from_=1, to=30, width=10)
@@ -148,6 +192,14 @@ class MainUI:
         self.damage_steps_spinbox.delete(0, 'end')
         self.damage_steps_spinbox.insert(0, config.damage_steps_default)
 
+    def create_run_buttons(self, main_dialog, row_index):
+        ttk.Button(main_dialog, text='Create Routes',   command=self.create_routes)         .grid(row=row_index, column=0, sticky=W, pady=4, padx=5)
+        #ttk.Button(main_dialog, text='Validate Routes',   command=self.not_implemented_yet) .grid(row=row_index, column=1, sticky=W, pady=4, padx=5)
+        ttk.Button(main_dialog, text='Run MDR',         command=self.not_implemented_yet)   .grid(row=row_index+1, column=0, sticky=W, pady=4, padx=5)
+
+    ###################################################################################
+    # Actions
+    ###################################################################################
     def browse_room_file(self):
         self.room_file_entry.delete(0, 'end')
         self.room_file_entry.insert(0, filedialog.askopenfilename())
@@ -164,16 +216,36 @@ class MainUI:
         self.status_label.config(text='Running..')
         map_file_name = self.room_file_entry.get()
         data_folder = self.data_folder_entry.get()
-        robust_factor = int(self.robust_factor_spinbox.get())
         num_of_agents = int(self.num_of_agents_spinbox.get())
         num_of_routes = int(self.num_of_routes_spinbox.get())
-        SetupRoutes.create_routes(map_file_name, data_folder, robust_factor, num_of_agents, num_of_routes)
-        self.status_label.config(text='Ready')
+        # get all agents data
+        agents_data = []
+        for agent_num in range(0, num_of_agents):
+            agent_entries = self.agentsEntries[agent_num]
+            # 1 Must reach target % - spinbox 0-100
+            # 2 Motion Equation - combobox - 9/8/6/5
+            # Start Policy - combobox - stay/ appear
+            # Goal Policy - combobox - stay/ disappear
+            # Adversarial - combobox - Yes/No
+            # D.S Budget - combobox - NA/1/2/3...
+            # print(motion_equation.current(), motion_equation.get())
 
-    def create_run_buttons(self, main_dialog, row_index):
-        ttk.Button(main_dialog, text='Create Routes',   command=self.create_routes)         .grid(row=row_index, column=0, sticky=W, pady=4, padx=5)
-        ttk.Button(main_dialog, text='Validate Routes',   command=self.not_implemented_yet) .grid(row=row_index, column=1, sticky=W, pady=4, padx=5)
-        ttk.Button(main_dialog, text='Run MDR',         command=self.not_implemented_yet)   .grid(row=row_index+1, column=0, sticky=W, pady=4, padx=5)
+            must_reach_target = int(agent_entries[1].get())
+            motion_equation = MotionEquation(agent_entries[2].get())
+            start_policy = StartPolicy(agent_entries[3].get())
+            goal_policy = GoalPolicy(agent_entries[4].get())
+            if agent_entries[5].get() == 'Yes':
+                is_adversarial = True
+                damage_steps_budget = agent_entries[6].get()
+            else:
+                is_adversarial = False
+                damage_steps_budget = 0
+
+            agents_data.append(Agent(agent_num, must_reach_target, start_policy, goal_policy, motion_equation,
+                                     is_adversarial, int(damage_steps_budget)))
+
+        SetupRoutes.create_routes(map_file_name, data_folder, agents_data, num_of_routes)
+        self.status_label.config(text='Ready')
 
     def num_of_agents_updated(self):
         newNumOfAgents = int(self.num_of_agents_spinbox.get())
@@ -187,7 +259,7 @@ class MainUI:
         self.num_of_routes_range_label.configure(text="(Min:1 Max:" + str(max_routes) + ")")
 
         if oldNumOfAgents < newNumOfAgents:
-            #add new rows
+            # add new rows
             for i in range(oldNumOfAgents + 1, newNumOfAgents + 1):
                 curr_row = i + 4
                 cols = []
@@ -204,20 +276,23 @@ class MainUI:
                 cols.append(reach_target_spinbox)
 
                 # Motion Equation - combobox - 9/8/6/5
-                motion_equation = ttk.Combobox(self.createRoutesFrame, values=["9", "8", "6", "5"], width=10)
+                motion_equation_values = [e.value for e in MotionEquation]
+                motion_equation = ttk.Combobox(self.createRoutesFrame, values=motion_equation_values, width=10)
                 motion_equation.grid(row=curr_row, column=2)
                 motion_equation.current(0)
                 cols.append(motion_equation)
                 #print(motion_equation.current(), motion_equation.get())
 
                 # Start Policy - combobox - stay/ appear
-                start_policy = ttk.Combobox(self.createRoutesFrame, values=["Stay", "Appear"], width=10)
+                start_policy_values = [e.value for e in StartPolicy]
+                start_policy = ttk.Combobox(self.createRoutesFrame, values=start_policy_values, width=10)
                 start_policy.grid(row=curr_row, column=3)
                 start_policy.current(1)
                 cols.append(start_policy)
 
                 # Goal Policy - combobox - stay/ disappear
-                goal_policy = ttk.Combobox(self.createRoutesFrame, values=["Stay", "Disappear"], width=10)
+                goal_policy_values = [e.value for e in GoalPolicy]
+                goal_policy = ttk.Combobox(self.createRoutesFrame, values=goal_policy_values, width=10)
                 goal_policy.grid(row=curr_row, column=4)
                 goal_policy.current(1)
                 cols.append(goal_policy)
@@ -237,7 +312,6 @@ class MainUI:
                 if i == 1:
                     d_s_budget.current(3)
                 cols.append(d_s_budget)
-
                 self.agentsEntries.append(cols)
 
         else:
@@ -251,12 +325,19 @@ class MainUI:
         self.status_label.config(text='Running..')
         map_file = self.room_file_entry.get()
         route_file = self.route_file_entry.get()
-        PrintRoutes.print_route(map_file, route_file, self.include_step_num.get())
+        self.print_routes_app.print_routes(map_file, route_file)
+        # PrintRoutes.print_route(map_file, route_file, self.include_step_num.get())
         self.status_label.config(text='Ready')
 
     def not_implemented_yet(self):
-        print ("Not Implemented Yet!")
+        print("Not Implemented Yet!")
 
+
+
+
+###################################################################################
+# Main UI
+###################################################################################
 if __name__ == "__main__":
     mainUI = MainUI()
     mainUI.main()

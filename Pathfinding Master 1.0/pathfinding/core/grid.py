@@ -58,7 +58,7 @@ class Grid(object):
         """
         return self.nodes[y][x]
 
-    def inside(self, x, y):
+    def is_inside_grid(self, x, y):
         """
         check, if field position is inside map
         :param x: x pos
@@ -67,13 +67,13 @@ class Grid(object):
         """
         return 0 <= x < self.width and 0 <= y < self.height
 
-    def walkable(self, x, y):
+    def is_walkable(self, x, y):
         """
         check, if the tile is inside grid and if it is set as walkable
         """
-        return self.inside(x, y) and self.nodes[y][x].walkable
+        return self.is_inside_grid(x, y) and self.nodes[y][x].walkable
 
-    def neighbors(self, node, robust_level, diagonal_movement=DiagonalMovement.never):
+    def get_walkable_neighbors(self, node, diagonal_movement=DiagonalMovement.never):
         """
         get all neighbors of one node
         :param node: node
@@ -84,19 +84,19 @@ class Grid(object):
         s0 = d0 = s1 = d1 = s2 = d2 = s3 = d3 = False
 
         # ↑
-        if self.walkable(x, y - 1):
+        if self.is_walkable(x, y - 1):
             neighbors.append(self.nodes[y - 1][x])
             s0 = True
         # →
-        if self.walkable(x + 1, y):
+        if self.is_walkable(x + 1, y):
             neighbors.append(self.nodes[y][x + 1])
             s1 = True
         # ↓
-        if self.walkable(x, y + 1):
+        if self.is_walkable(x, y + 1):
             neighbors.append(self.nodes[y + 1][x])
             s2 = True
         # ←
-        if self.walkable(x - 1, y):
+        if self.is_walkable(x - 1, y):
             neighbors.append(self.nodes[y][x - 1])
             s3 = True
 
@@ -117,23 +117,22 @@ class Grid(object):
             d0 = d1 = d2 = d3 = True
 
         # ↖
-        if d0 and self.walkable(x - 1, y - 1):
+        if d0 and self.is_walkable(x - 1, y - 1):
             neighbors.append(self.nodes[y - 1][x - 1])
 
         # ↗
-        if d1 and self.walkable(x + 1, y - 1):
+        if d1 and self.is_walkable(x + 1, y - 1):
             neighbors.append(self.nodes[y - 1][x + 1])
 
         # ↘
-        if d2 and self.walkable(x + 1, y + 1):
+        if d2 and self.is_walkable(x + 1, y + 1):
             neighbors.append(self.nodes[y + 1][x + 1])
 
         # ↙
-        if d3 and self.walkable(x - 1, y + 1):
+        if d3 and self.is_walkable(x - 1, y + 1):
             neighbors.append(self.nodes[y + 1][x - 1])
 
         # Stay
-
         neighbors.append(self.nodes[y][x])
 
         return neighbors

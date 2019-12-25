@@ -83,55 +83,70 @@ class Maze:
                     display_surf.blit(image_surf, (col_index * 10 + shift_y, row_index * 10 + shift_x))
 
 
-class App:
-    windowWidth = 600
-    windowHeight = 600
+class PrintRoutesApp:
+    windowWidth = 550
+    windowHeight = 470
     all_agents = []
     max_steps = 0
     time_step = 0
     step_label: Label
     root = None
+    starting_row = 0
     stop_play = False
+    pygame_frame = None
 
-    def __init__(self, map_file, routes_file):
+    def __init__(self, tk_root, starting_row):
         self._running = True
         self._display_surf = None
         self._agent_img = None
         self._block_img = None
+        self.root = tk_root
+        self.starting_row = starting_row
+
+        button_frame = tk.Frame(self.root, width=self.windowWidth, height=75)
+        button_frame.grid(row=self.starting_row, column=0)
+        button_frame.columnconfigure(0, weight=1)
+        button_frame.rowconfigure(0, weight=1)
+
+        step_title_label = Label(button_frame, text="Step:")
+        step_title_label.grid(row=self.starting_row, column=0)
+        self.step_label = Label(button_frame, text=self.time_step)
+        self.step_label.grid(row=self.starting_row, column=1)
+        prev_button = ttk.Button(button_frame, text='<', command=self.on_prev_button)
+        prev_button.grid(row=self.starting_row, column=2)
+        next_button = ttk.Button(button_frame, text='>', command=self.on_next_button)
+        next_button.grid(row=self.starting_row, column=3)
+        play_button = ttk.Button(button_frame, text='Play', command=self.on_play_button)
+        play_button.grid(row=self.starting_row, column=4)
+        play_button = ttk.Button(button_frame, text='Stop', command=self.on_stop_button)
+        play_button.grid(row=self.starting_row, column=5)
+        play_button = ttk.Button(button_frame, text='Restart', command=self.on_restart_button)
+        play_button.grid(row=self.starting_row, column=6)
+        # embed = tk.Frame(self.root, width=self.windowWidth, height=self.windowHeight)  # creates embed frame for pygame window
+        self.pygame_frame = tk.Frame(self.root)  # creates embed frame for pygame window
+        self.pygame_frame.grid(row=self.starting_row+1, column=0)
+        self.pygame_frame.columnconfigure(0, weight=1)
+        self.pygame_frame.rowconfigure(0, weight=1)
+
+        os.environ['SDL_WINDOWID'] = str(self.pygame_frame.winfo_id())
+        os.environ['SDL_VIDEODRIVER'] = 'windib'
+
+    def print_routes(self, map_file, routes_file):
         self.maze = Maze(map_file)
         self.windowWidth = self.maze.M*10
         self.windowHeight = self.maze.N*10
+        self.pygame_frame.configure(width=self.windowWidth, height=self.windowHeight)
         self.routes_file = routes_file
         self.create_agents_routes()
 
-        self.root = tk.Tk()
-        buttonwin = tk.Frame(self.root, width=self.windowWidth, height=75)
-        buttonwin.grid(row=0, column=0)
-        step_title_label = Label(buttonwin, text="Step:")
-        step_title_label.grid(row=0, column=0)
-        self.step_label = Label(buttonwin, text=self.time_step)
-        self.step_label.grid(row=0, column=1)
-        prev_button = ttk.Button(buttonwin, text='<', command=self.on_prev_button)
-        prev_button.grid(row=0, column=2)
-        next_button = ttk.Button(buttonwin, text='>', command=self.on_next_button)
-        next_button.grid(row=0, column=3)
-        play_button = ttk.Button(buttonwin, text='Play', command=self.on_play_button)
-        play_button.grid(row=0, column=4)
-        play_button = ttk.Button(buttonwin, text='Stop', command=self.on_stop_button)
-        play_button.grid(row=0, column=5)
-        play_button = ttk.Button(buttonwin, text='Restart', command=self.on_restart_button)
-        play_button.grid(row=0, column=6)
-        embed = tk.Frame(self.root, width=self.windowWidth, height=self.windowHeight)  # creates embed frame for pygame window
-        embed.grid(row=1, column=0)
-        os.environ['SDL_WINDOWID'] = str(embed.winfo_id())
-        os.environ['SDL_VIDEODRIVER'] = 'windib'
         self._display_surf = pygame.display.set_mode((self.windowWidth, self.windowHeight))
-
         pygame.display.update()
         self.root.update()
+        self.on_execute()
 
 
     def create_agents_routes(self):
+        self.all_agents = []
         agent_num = 1
         with open(self.routes_file, 'rt') as csvfile:
             csv_reader = csv.reader(csvfile)
@@ -145,15 +160,12 @@ class App:
                 agent_num += 1
 
     def on_init(self):
-        # pygame.init()
-        # self._display_surf = pygame.display.set_mode((self.windowWidth, self.windowHeight), pygame.HWSURFACE)
-        # pygame.display.set_caption('MAPF')
-
         self._running = True
-        self._block_img = pygame.image.load("white-square-icon.png").convert()
-        self._agent_img = pygame.image.load("small-drone.png").convert()
-        self._start_img = pygame.image.load("start.png").convert()
-        self._goal_img = pygame.image.load("end.png").convert()
+        images_path = os.path.dirname(os.path.abspath(__file__)) + "\\..\\Images\\"
+        self._agent_img = pygame.image.load(images_path + "small-drone.png").convert()
+        self._block_img = pygame.image.load(images_path + "white-square-icon.png").convert()
+        self._start_img = pygame.image.load(images_path + "start.png").convert()
+        self._goal_img = pygame.image.load(images_path + "end.png").convert()
 
     def on_event(self, event):
         if event.type == QUIT:
@@ -170,7 +182,7 @@ class App:
         for agent in self.all_agents:
             self._display_surf.blit(self._start_img, (10 * agent.get_start_x() , 10 * agent.get_start_y()))
             self._display_surf.blit(self._goal_img, (10 * agent.get_goal_x() , 10 * agent.get_goal_y()))
-            self._display_surf.blit(self._agent_img, (10 * agent.x , 10 * agent.y ))
+            self._display_surf.blit(self._agent_img, (10 * agent.x, 10 * agent.y))
         self.maze.draw(self._display_surf, self._block_img)
         self.root.update()
         pygame.display.flip()
@@ -226,13 +238,10 @@ class App:
             agent.restart()
         self.on_render()
 
-if __name__ == "__main__":
-    # temp hardcoded
-    map_file = 'D:/MAPF/Pathfinding Master 1.0/pathfinding/Data/Room1_new.txt'
-    routes_file = 'D:/MAPF/Pathfinding Master 1.0/pathfinding/Data/Robust_1/Route-1_Agents-3_Robust-1.csv'
-    theApp = App(map_file, routes_file)
-    theApp.on_execute()
-    # while True:
-    #     pygame.display.update()
-    #     root.update()
-
+# if __name__ == "__main__":
+#     #temp hardcoded
+#     map_file = 'D:/MAPF/Pathfinding Master 1.0/pathfinding/Data/Room1_new.txt'
+#     routes_file = 'D:/MAPF/Pathfinding Master 1.0/pathfinding/Data/Robust_1/Route-1_Agents-3_Robust-1.csv'
+#     theApp = App(tk.Tk(), 0)
+#     theApp.print_routes(map_file, routes_file)
+#

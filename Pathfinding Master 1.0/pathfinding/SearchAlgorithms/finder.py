@@ -81,21 +81,26 @@ class Finder(object):
             abs(node_a.x - node_b.x),
             abs(node_a.y - node_b.y))
 
-    def find_neighbors(self, grid, node, route, agent_no, robust_level, diagonal_movement=None):
+    def find_neighbors(self, grid, node, all_agents_routes, agent_no, agents_data, diagonal_movement=None):
         '''
         find neighbor, same for Djikstra, A*, Bi-A*, IDA*
         '''
-        grid2 = grid
+        grid_copy = grid
         if not diagonal_movement:
             diagonal_movement = self.diagonal_movement
 
-        if robust_level > 0:
-            radius = utils.get_radius(grid2, node, robust_level, route, agent_no, 0)
-            for curr_radius in radius:
-                if curr_radius != (node.x, node.y):
-                    grid2.nodes[curr_radius[0]][curr_radius[1]].walkable = False
+        radius_nodes = utils.get_dangerous_nodes(grid_copy, agent_no, node.step, all_agents_routes, agents_data)
+        for curr_radius_node in radius_nodes:
+            if curr_radius_node.x != node.x and curr_radius_node.y != node.y:
+                grid_copy.nodes[curr_radius_node.x][curr_radius_node.y].walkable = False
 
-        return grid2.neighbors(node, robust_level, diagonal_movement=diagonal_movement)
+        # if robust_level > 0:
+        #     radius = utils.get_radius_nodes(grid_copy, node, robust_level, route, agent_no)
+        #     for curr_radius in radius:
+        #         if curr_radius != (node.x, node.y):
+        #             grid_copy.nodes[curr_radius[0]][curr_radius[1]].is_walkable = False
+
+        return grid_copy.get_walkable_neighbors(node, diagonal_movement=diagonal_movement)
 
 
     def keep_running(self):
@@ -150,7 +155,7 @@ class Finder(object):
                 open_list.remove(node)
                 heapq.heappush(open_list, node)
 
-    def find_path(self, start, end, grid, route, agent_no, robust_level):
+    def find_path(self, start, end, grid, route, agent_no, agents_data):
         """
         find a path from start to end node on grid by iterating over
         all neighbors of a node (see check_neighbors)
@@ -169,7 +174,7 @@ class Finder(object):
             self.runs += 1
             self.keep_running()
 
-            path = self.check_neighbors(start, end, grid, open_list, route, agent_no, robust_level)
+            path = self.check_neighbors(start, end, grid, open_list, route, agent_no, agents_data)
             if path:
                 return path, self.runs
 

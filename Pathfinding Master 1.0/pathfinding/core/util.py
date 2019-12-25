@@ -12,10 +12,12 @@ def backtrace(node):
     Backtrace according to the parent records and return the path.
     (including both start and end nodes)
     """
-    path = [((node.x, node.y), node.step)]
+    #path = [((node.x, node.y), node.step)]
+    path = [node]
     while node.parent:
         node = node.parent
-        path.append(((node.x, node.y), node.step))
+        #path.append(((node.x, node.y), node.step))
+        path.append(node)
     path.reverse()
     return path
 
@@ -120,7 +122,7 @@ def smoothen_path(grid, path, use_raytrace=False):
         line = interpolate([sx, sy], coord)
         blocked = False
         for test_coord in line[1:]:
-            if not grid.walkable(test_coord[0], test_coord[1]):
+            if not grid.is_walkable(test_coord[0], test_coord[1]):
                 blocked = True
                 break
         if not blocked:

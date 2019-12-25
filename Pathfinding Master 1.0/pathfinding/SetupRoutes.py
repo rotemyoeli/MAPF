@@ -15,22 +15,18 @@ from pathfinding.SearchAlgorithms.a_star import AStarFinder
 ###################################################################################
 # Main Setup Route
 ###################################################################################
-def create_routes(map_file_name, data_folder, robust_factor, num_of_agents, num_of_routes):
-    # load the map file into numpy array
-    with open(map_file_name, 'rt') as infile:
-        grid1 = np.array([list(line.strip()) for line in infile.readlines()])
-    print('Grid shape', grid1.shape)
+def create_routes(map_file_name, data_folder, agents_data, num_of_routes):
+    num_of_agents = len(agents_data)
 
-    grid1[grid1 == '@'] = 0  # object on the map
-    grid1[grid1 == 'T'] = 0  # object on the map
-    grid1[grid1 == '.'] = 1  # free on map
-
-    grid = np.array(grid1.astype(np.int))
+    grid = load_map_to_grid(map_file_name)
 
     os.chdir(data_folder)
+    path = data_folder + "\\Routes Output"
+    if not os.path.exists(path):
+        os.makedirs(path)
+    os.chdir(path)
 
-    starts_arr, goals_arr = utils.get_positions(grid, num_of_agents)
-
+    starts_arr, goals_arr = utils.get_start_and_goal_positions(grid, num_of_agents)
     for reset_grid in range(0, len(starts_arr)):
         grid[starts_arr[reset_grid]] = 1
         grid[goals_arr[reset_grid]] = 1
@@ -44,56 +40,55 @@ def create_routes(map_file_name, data_folder, robust_factor, num_of_agents, num_
     order_arr = list(itert.permutations(tmp_str, num_of_agents))
     random.shuffle(order_arr)
 
-    grid1 = Grid(matrix=grid)
 
     ##################################################
-    # Create the no. of different Directories/robust
+    # Set here the number of unique routes
     ##################################################
-    for current_robust_factor in range(0, robust_factor+1):
-        path = data_folder + "/" + "Robust_" + str(current_robust_factor)
-        if not os.path.exists(path):
-            os.makedirs(path)
-        os.chdir(path)
+    for current_route in range(0, min(num_of_routes, len(order_arr))):
+        routes = [[] for i in range(num_of_agents)]
+        current_agents_order = list(map(int, order_arr[current_route]))
+
+        # build each agent's route
+        for agent_index in range(0, num_of_agents):
+            agent_num = current_agents_order[agent_index]
+            ############################
+            # Reset the grid
+            ############################
+            curr_grid = Grid(matrix=grid)
+            start = curr_grid.node(starts_arr[agent_num][1], starts_arr[agent_num][0])
+            goal = curr_grid.node(goals_arr[agent_num][1], goals_arr[agent_num][0])
+
+            # TODO create agent's finder with the correct motion equation
+            finder = AStarFinder(diagonal_movement=DiagonalMovement.always)
+            path, runs = finder.find_path(start, goal, curr_grid, routes, agent_index, agents_data)
+            # routes.append(path)
+            routes[agent_num] = path
+            print('operations:', runs, 'path length:', len(path))
+            print(curr_grid.grid_str(path=path, start=start, end=goal))
+            for x in range(0, len(routes)):
+                print(routes[x])
 
         ##################################################
-        # Set here the number of unique routes
+        # Save routes to csv file
         ##################################################
-        for current_route in range(0, num_of_routes):
-            if current_route >= len(order_arr):
-                break
+        df_res = pd.DataFrame(routes)
+        #TODO add metadata to the file / add informative name with all agents data
+        file_name_csv = "Route-" + str(current_route+1) + '_Agents-' + str(num_of_agents) + '.csv'
+        print(file_name_csv)
+        df = pd.DataFrame(routes)
+        df.to_csv(file_name_csv, index=False, header=False)
 
-            current_agents_order = order_arr[current_route]
-            current_agents_order = list(map(int, current_agents_order))
-            routes = [[] for i in range(num_of_agents)]
-
-            for agent_no in range(0, num_of_agents):
-
-                ############################
-                # Reset the grid
-                ############################
-                grid1 = Grid(matrix=grid)
-                start = grid1.node(starts_arr[current_agents_order[agent_no]][1], starts_arr[current_agents_order[agent_no]][0])
-                goal = grid1.node(goals_arr[current_agents_order[agent_no]][1], goals_arr[current_agents_order[agent_no]][0])
-
-                finder = AStarFinder(diagonal_movement=DiagonalMovement.always)
-                path, runs = finder.find_path(start, goal, grid1, routes, agent_no, current_robust_factor)
-                # routes.append(path)
-                routes[agent_no] = path
-                print('operations:', runs, 'path length:', len(path))
-                print(grid1.grid_str(path=path, start=start, end=goal))
-                for x in range(0, len(routes)):
-                    print(routes[x])
-
-            ##################################################
-            # Save routes to csv file
-            ##################################################
-            df_res = pd.DataFrame(routes)
-            file_name_csv = "Route-" + str(current_route+1) + '_Agents-' + str(num_of_agents) + '_Robust-' + str(current_robust_factor) + '.csv'
-            print(file_name_csv)
-            df = pd.DataFrame(routes)
-            df.to_csv(file_name_csv, index=False, header=False)
-
-        path = '..'
-        os.chdir(path)
     path = '..'
     os.chdir(path)
+
+
+def load_map_to_grid(map_file_name):
+    # load the map file into numpy array
+    with open(map_file_name, 'rt') as infile:
+        grid1 = np.array([list(line.strip()) for line in infile.readlines()])
+    print('Grid shape', grid1.shape)
+    grid1[grid1 == '@'] = 0  # object on the map
+    grid1[grid1 == 'T'] = 0  # object on the map
+    grid1[grid1 == '.'] = 1  # free on map
+    grid = np.array(grid1.astype(np.int))
+    return grid

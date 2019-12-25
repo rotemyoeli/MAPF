@@ -10,6 +10,9 @@ import glob
 import openpyxl as openpyxl
 import csv
 import ast
+
+from pathfinding.Core.node import Node
+
 '''
 Check if pos is a legal position in the map
 '''
@@ -85,7 +88,7 @@ def find_free_place(grid_tmp, current_agent_pos, neighbors):
 # currently not used
 def get_start_approval(array, start_pos, agent_no, route, robust_dist):
 
-    radius = get_radius(array, start_pos[0], robust_dist)
+    radius = get_radius_nodes(array, start_pos[0], robust_dist)
     ##Check for collision
     for a in range(0, agent_no):
 
@@ -148,7 +151,7 @@ def is_goal(self, node, route):
 # get start and goal for all agents (not the lead)
 ##############################################################################
 
-def get_positions(grid_tmp, agent_number):
+def get_start_and_goal_positions(grid_tmp, agent_number):
     neighbors = [(0, 1), (0, -1), (1, 0), (-1, 0), (1, 1), (1, -1), (-1, 1), (-1, -1)]
     new_starts = []
     new_goals = []
@@ -159,9 +162,7 @@ def get_positions(grid_tmp, agent_number):
     start_is_set = 0
     goal_is_set = 0
     while start_is_set == 0:
-
         new_starts.append((random.sample(range(0, x_size), 1)[0], random.sample(range(0, y_size), 1)[0]))
-
         if grid_tmp[new_starts[0]] == 0:
             new_starts = []
             continue
@@ -169,10 +170,9 @@ def get_positions(grid_tmp, agent_number):
             grid_tmp[new_starts[0]] = 0
             start_is_set = 1
             break
+
     while goal_is_set == 0:
-
         new_goals.append((random.sample(range(0, x_size), 1)[0], random.sample(range(0, y_size), 1)[0]))
-
         if grid_tmp[new_goals[0]] == 0:
             new_goals = []
             continue
@@ -208,11 +208,9 @@ def get_positions(grid_tmp, agent_number):
 # the radius is a list of nodes that risk agent no. 0, meaning all nodes
 # from which another agent can reach agent no. 0 using "robust_param" steps
 ##############################################################################
-def get_radius(grid, node, robust_param, all_agents_routes, current_agent_no, Is_MDR):
+def get_radius_nodes(grid, node, robust_param, all_agents_routes, current_agent_no):
     robust_radius = []
 
-    if Is_MDR == 0:
-        current_agent_no = 0 # Irit - why?
     if len(all_agents_routes) == 0:
         return []
 
@@ -236,8 +234,65 @@ def get_radius(grid, node, robust_param, all_agents_routes, current_agent_no, Is
             print("neighbor=( " + str(neighbor[0]) + ", " + str(neighbor[1]) + ")")
             if neighbor[0] < len(grid.nodes) \
                     and neighbor[0] < len(grid.nodes[neighbor[0]]) \
-                    and grid.nodes[neighbor[0]][neighbor[1]].walkable:
+                    and grid.nodes[neighbor[0]][neighbor[1]].is_walkable:
 
                 robust_radius.append(neighbor)
 
     return robust_radius
+
+
+def get_dangerous_nodes(grid, curr_agent_no, step, all_agents_routes, agents_data):
+    # TODO block the radius by walls
+    # TODO think what to do with "stay at goal" - maybe append this stay steps to the end of all routes
+
+    # for each existing agent's route:
+    #   avoid collision: add the next step of that agent
+    #   if the other agent is adversarial-> add to its radius according to next step and its damage steps
+    #   if I'm adversarial -> make sure my next step keeps the other agent safe from me:
+    #       verify the next D steps do not enter my radius (D= my damage steps)
+    dangerous_nodes = []
+
+    for other_agent_num, other_agent_route in enumerate(all_agents_routes):
+        if len(other_agent_route) == 0:
+            continue
+
+        if other_agent_num == curr_agent_no:
+            continue
+
+        # other agent finished his route
+        if step >= len(other_agent_route):
+            continue
+
+        # avoid collision
+        dangerous_nodes.append(other_agent_route[step])
+
+        # stay away from adversarial agents
+        if agents_data[other_agent_num].is_adversarial:
+            # TODO maybe add a check that the other agent exists in the next step
+            # TODO think if we need to check the radius from the current position or the next (the step)
+            dangerous_nodes.append(get_dangerous_square_nodes(grid, other_agent_route[step],
+                                                              agents_data[other_agent_num].damage_steps_budget))
+
+        # don't risk others - don't enter their safe square (around the next step)
+        if agents_data[curr_agent_no].is_adversarial:
+            dangerous_nodes.append(get_dangerous_square_nodes(grid, other_agent_route[step+1],
+                                                              agents_data[curr_agent_no].damage_steps_budget))
+
+    return dangerous_nodes
+
+
+def get_dangerous_square_nodes(grid, node, damage_steps):
+    # calculate the (2*damage_steps + 1)^2 square around node
+    dangerous_square_nodes = []
+    upper_left_corner_x = node.x - damage_steps
+    upper_left_corner_y = node.y - damage_steps
+
+    length = 2*damage_steps + 1
+
+    for i_x in range(length):
+        for i_y in range(length):
+            if grid.is_walkable(upper_left_corner_x + i_x, upper_left_corner_y + i_y):
+                dangerous_square_nodes.append(Node(x=upper_left_corner_x + i_x, y=upper_left_corner_y + i_y))
+
+    return dangerous_square_nodes
+
