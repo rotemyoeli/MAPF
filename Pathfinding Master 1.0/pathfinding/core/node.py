@@ -53,3 +53,6 @@ class Node(object):
         self.retain_count = 0
         # used for IDA* and Jump-Point-Search
         self.tested = False
+
+    def __str__(self):
+        return "((" + str(self.x) + "," + str(self.y) + ")," + str(self.step) + ")"

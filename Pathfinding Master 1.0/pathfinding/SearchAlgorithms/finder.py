@@ -4,6 +4,7 @@ import time  # for time limitation
 from pathfinding.Core.util import SQRT2
 from pathfinding.Core.diagonal_movement import DiagonalMovement
 from pathfinding.Utils import utils
+import copy
 
 # max. amount of tries we iterate until we abort the search
 MAX_RUNS = float('inf')
@@ -85,22 +86,12 @@ class Finder(object):
         '''
         find neighbor, same for Djikstra, A*, Bi-A*, IDA*
         '''
-        grid_copy = grid
         if not diagonal_movement:
             diagonal_movement = self.diagonal_movement
 
-        radius_nodes = utils.get_dangerous_nodes(grid_copy, agent_no, node.step, all_agents_routes, agents_data)
-        for curr_radius_node in radius_nodes:
-            if curr_radius_node.x != node.x and curr_radius_node.y != node.y:
-                grid_copy.nodes[curr_radius_node.x][curr_radius_node.y].walkable = False
+        radius_nodes = utils.get_dangerous_nodes(grid, agent_no, node.step+1, all_agents_routes, agents_data)
 
-        # if robust_level > 0:
-        #     radius = utils.get_radius_nodes(grid_copy, node, robust_level, route, agent_no)
-        #     for curr_radius in radius:
-        #         if curr_radius != (node.x, node.y):
-        #             grid_copy.nodes[curr_radius[0]][curr_radius[1]].is_walkable = False
-
-        return grid_copy.get_walkable_neighbors(node, diagonal_movement=diagonal_movement)
+        return grid.get_walkable_neighbors(node, radius_nodes, diagonal_movement=diagonal_movement)
 
 
     def keep_running(self):
@@ -152,7 +143,8 @@ class Finder(object):
                 # the node can be reached with smaller cost.
                 # Since its f value has been updated, we have to
                 # update its position in the open list
-                open_list.remove(node)
+                if node in open_list:
+                    open_list.remove(node)
                 heapq.heappush(open_list, node)
 
     def find_path(self, start, end, grid, route, agent_no, agents_data):

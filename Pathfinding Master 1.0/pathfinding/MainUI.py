@@ -44,7 +44,7 @@ class MainUI:
         TAB_CONTROL.grid(row=0, sticky=NSEW)
         # Tab1
         create_routes_tab = ttk.Frame(TAB_CONTROL)
-        TAB_CONTROL.add(create_routes_tab, text='Routs Creation')
+        TAB_CONTROL.add(create_routes_tab, text='Routes Creation')
         self.create_general_data_frame(create_routes_tab, 1)
         self.create_routes_frame(create_routes_tab, 2)
 
@@ -322,12 +322,9 @@ class MainUI:
                 del self.agentsEntries[i-1]
 
     def print_routes(self):
-        self.status_label.config(text='Running..')
         map_file = self.room_file_entry.get()
         route_file = self.route_file_entry.get()
         self.print_routes_app.print_routes(map_file, route_file)
-        # PrintRoutes.print_route(map_file, route_file, self.include_step_num.get())
-        self.status_label.config(text='Ready')
 
     def not_implemented_yet(self):
         print("Not Implemented Yet!")

@@ -59,23 +59,12 @@ class AStarFinder(Finder):
         # get neighbors of the current node
         neighbors = self.find_neighbors(grid, node, route, agent_no, agents_data)
         for neighbor in neighbors:
-            if neighbor.closed:
+            # allow staying in same position
+            if node.x == neighbor.x and node.y == neighbor.y:
+                neighbor.closed = False
+
+            if neighbor.closed :
                 # already visited last minimum f value
-                continue
-
-            #################################################
-            # Check for collision or Robust level radius
-            #################################################
-
-            neighbor_is_not_valid = False
-            if len(route) > 0:
-                for number_of_agent in range(0, len(route)):
-                    if node.step < len(route[number_of_agent])-1:
-                        if (neighbor.x, neighbor.y) == route[number_of_agent][node.step+1]:
-                            print((neighbor.x, neighbor.y), route[number_of_agent][node.step+1], node.step+1)
-                            neighbor_is_not_valid = True
-                            continue
-            if neighbor_is_not_valid:
                 continue
 
             if backtrace_by and neighbor.opened == backtrace_by:

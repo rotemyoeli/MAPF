@@ -47,10 +47,12 @@ def create_routes(map_file_name, data_folder, agents_data, num_of_routes):
     for current_route in range(0, min(num_of_routes, len(order_arr))):
         routes = [[] for i in range(num_of_agents)]
         current_agents_order = list(map(int, order_arr[current_route]))
+        print("current_agents_order: " + str(current_agents_order))
 
         # build each agent's route
         for agent_index in range(0, num_of_agents):
-            agent_num = current_agents_order[agent_index]
+            #agent_num = current_agents_order[agent_index]
+            agent_num = agent_index # temp fixed order for debug
             ############################
             # Reset the grid
             ############################
@@ -60,19 +62,24 @@ def create_routes(map_file_name, data_folder, agents_data, num_of_routes):
 
             # TODO create agent's finder with the correct motion equation
             finder = AStarFinder(diagonal_movement=DiagonalMovement.always)
-            path, runs = finder.find_path(start, goal, curr_grid, routes, agent_index, agents_data)
+            path, runs = finder.find_path(start, goal, curr_grid, routes, agent_num, agents_data)
             # routes.append(path)
             routes[agent_num] = path
+            print("\n\n************** Agent #" + str(agent_num) + "**************")
             print('operations:', runs, 'path length:', len(path))
             print(curr_grid.grid_str(path=path, start=start, end=goal))
-            for x in range(0, len(routes)):
-                print(routes[x])
+            for p in path:
+                print(p, end=" ")
+            print("")
+            # for x in range(0, len(routes[agent_num])):
+            #     tuple = ((routes[agent_num][x].x, routes[agent_num][x].y), routes[agent_num][x].step)
+            #     print()
 
         ##################################################
         # Save routes to csv file
         ##################################################
         df_res = pd.DataFrame(routes)
-        #TODO add metadata to the file / add informative name with all agents data
+        # TODO add metadata to the file / add informative name with all agents data
         file_name_csv = "Route-" + str(current_route+1) + '_Agents-' + str(num_of_agents) + '.csv'
         print(file_name_csv)
         df = pd.DataFrame(routes)

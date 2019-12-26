@@ -270,14 +270,18 @@ def get_dangerous_nodes(grid, curr_agent_no, step, all_agents_routes, agents_dat
         if agents_data[other_agent_num].is_adversarial:
             # TODO maybe add a check that the other agent exists in the next step
             # TODO think if we need to check the radius from the current position or the next (the step)
-            dangerous_nodes.append(get_dangerous_square_nodes(grid, other_agent_route[step],
-                                                              agents_data[other_agent_num].damage_steps_budget))
+            dangerous_nodes += (get_dangerous_square_nodes(grid, other_agent_route[step],
+                                                           agents_data[other_agent_num].damage_steps_budget))
 
-        # don't risk others - don't enter their safe square (around the next step)
-        if agents_data[curr_agent_no].is_adversarial:
-            dangerous_nodes.append(get_dangerous_square_nodes(grid, other_agent_route[step+1],
-                                                              agents_data[curr_agent_no].damage_steps_budget))
+        # don't risk others - don't enter their safe square (on the next step)
+        if agents_data[curr_agent_no].is_adversarial and step+1 < len(other_agent_route):
+            dangerous_nodes += (get_dangerous_square_nodes(grid, other_agent_route[step+1],
+                                                           agents_data[curr_agent_no].damage_steps_budget))
 
+    print("AgentNum: " + str(curr_agent_no) + " Step: " + str(step) + " dangerous_nodes", end=" ")
+    for d in dangerous_nodes:
+        print(d, end=" ")
+    print(" ")
     return dangerous_nodes
 
 

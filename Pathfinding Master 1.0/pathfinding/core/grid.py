@@ -73,7 +73,7 @@ class Grid(object):
         """
         return self.is_inside_grid(x, y) and self.nodes[y][x].walkable
 
-    def get_walkable_neighbors(self, node, diagonal_movement=DiagonalMovement.never):
+    def get_walkable_neighbors(self, node, radius_nodes, diagonal_movement=DiagonalMovement.never):
         """
         get all neighbors of one node
         :param node: node
@@ -135,7 +135,40 @@ class Grid(object):
         # Stay
         neighbors.append(self.nodes[y][x])
 
-        return neighbors
+        # filter dangerous neighbors
+        print("Step: " + str(node.step) + " neighbors before:", end=" ")
+        for neighbor in neighbors:
+            print(neighbor, end=" ")
+        print("")
+        # print("Step: " + str(node.step) + " radius_nodes:", end=" ")
+        # for radius_node in radius_nodes:
+        #     print(radius_node, end=" ")
+        # print("")
+
+        good_neighbors = []
+        if len(radius_nodes) > 0:
+            for neighbor in neighbors:
+                is_good = True
+                for radius_node in radius_nodes:
+                    if neighbor.x == radius_node.x and neighbor.y == radius_node.y:
+                        print("removing dangerous:" + str(neighbor))
+                        is_good = False
+                        break
+                if is_good:
+                    good_neighbors.append(neighbor)
+        else:
+            good_neighbors = neighbors
+
+        if len(good_neighbors) == 0:
+            # no valid neighbors (maybe the starting position is not legal - stay until it's legal to move)
+            good_neighbors.append(self.nodes[y][x])
+
+        print("Step: " + str(node.step) + " neighbors after:  ", end=" ")
+        for neighbor in good_neighbors:
+            print(neighbor, end=" ")
+        print("")
+
+        return good_neighbors
 
     def cleanup(self):
         for y_nodes in self.nodes:

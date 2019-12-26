@@ -132,6 +132,7 @@ class PrintRoutesApp:
         os.environ['SDL_VIDEODRIVER'] = 'windib'
 
     def print_routes(self, map_file, routes_file):
+        self.time_step = 0
         self.maze = Maze(map_file)
         self.windowWidth = self.maze.M*10
         self.windowHeight = self.maze.N*10
@@ -163,6 +164,7 @@ class PrintRoutesApp:
         self._running = True
         images_path = os.path.dirname(os.path.abspath(__file__)) + "\\..\\Images\\"
         self._agent_img = pygame.image.load(images_path + "small-drone.png").convert()
+        self._agent0_img = pygame.image.load(images_path + "small-drone1.png").convert()
         self._block_img = pygame.image.load(images_path + "white-square-icon.png").convert()
         self._start_img = pygame.image.load(images_path + "start.png").convert()
         self._goal_img = pygame.image.load(images_path + "end.png").convert()
@@ -179,10 +181,16 @@ class PrintRoutesApp:
             return
         self._display_surf.fill((0, 0, 0))
         self.step_label.config(text=str(self.time_step))
+        # first display all starts and goals
         for agent in self.all_agents:
             self._display_surf.blit(self._start_img, (10 * agent.get_start_x() , 10 * agent.get_start_y()))
             self._display_surf.blit(self._goal_img, (10 * agent.get_goal_x() , 10 * agent.get_goal_y()))
-            self._display_surf.blit(self._agent_img, (10 * agent.x, 10 * agent.y))
+
+        for agent in self.all_agents:
+            if agent.agent_num == 1:
+                self._display_surf.blit(self._agent0_img, (10 * agent.x, 10 * agent.y))
+            else:
+                self._display_surf.blit(self._agent_img, (10 * agent.x, 10 * agent.y))
         self.maze.draw(self._display_surf, self._block_img)
         self.root.update()
         pygame.display.flip()
