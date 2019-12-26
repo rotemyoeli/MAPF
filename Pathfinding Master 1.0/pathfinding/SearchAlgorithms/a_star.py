@@ -59,9 +59,11 @@ class AStarFinder(Finder):
         # get neighbors of the current node
         neighbors = self.find_neighbors(grid, node, route, agent_no, agents_data)
         for neighbor in neighbors:
-            # allow staying in same position
-            if node.x == neighbor.x and node.y == neighbor.y:
-                neighbor.closed = False
+            # allow staying in same position if there are no legal moves
+            if len(neighbors) == 1:
+                if node.x == neighbor.x and node.y == neighbor.y:
+                    neighbor.closed = False
+                    neighbor.opened = False
 
             if neighbor.closed :
                 # already visited last minimum f value

@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import copy
+
 from .node import Node
 try:
     import numpy as np
@@ -155,13 +157,14 @@ class Grid(object):
                         is_good = False
                         break
                 if is_good:
+                    good_neighbors.append(copy.deepcopy(neighbor))
                     good_neighbors.append(neighbor)
         else:
             good_neighbors = neighbors
 
         if len(good_neighbors) == 0:
             # no valid neighbors (maybe the starting position is not legal - stay until it's legal to move)
-            good_neighbors.append(self.nodes[y][x])
+            good_neighbors.append(copy.deepcopy(self.nodes[y][x]))
 
         print("Step: " + str(node.step) + " neighbors after:  ", end=" ")
         for neighbor in good_neighbors:
